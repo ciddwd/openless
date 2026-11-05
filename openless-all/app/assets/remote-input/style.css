@@ -368,6 +368,12 @@ body {
   background: var(--accent-solid-bg);
   color: var(--accent-solid-ink);
 }
+.mode-notice {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 13px;
+  text-align: right;
+}
 
 /* ===== 录音主区 ===== */
 .rec-main {

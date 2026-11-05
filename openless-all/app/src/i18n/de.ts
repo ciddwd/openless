@@ -2455,7 +2455,9 @@ export const de: typeof zhCN = {
       enableDesc:
         'Nimm über den Browser eines Smartphones oder Tablets im lokalen Netzwerk auf. Der Text wird am Cursor deines Computers eingefügt (HTTPS erforderlich; dem Zertifikat beim ersten Besuch vertrauen).',
       portLabel: 'Port',
-      defaultModeLabel: 'Standard-Aufnahmemodus',
+      defaultModeLabel: 'Fernaufnahmemodus',
+      modeLocked: 'Beende die Fernaufnahme, bevor du den Modus änderst.',
+      modeSaveFailed: 'Der Aufnahmemodus konnte nicht gespeichert werden. Versuche es erneut.',
       modeToggle: 'Zum Umschalten tippen',
       modeHold: 'Zum Sprechen gedrückt halten',
       urlLabel: 'Zugriffs-URL',

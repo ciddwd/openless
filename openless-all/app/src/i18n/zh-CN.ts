@@ -2250,7 +2250,9 @@ export const zhCN = {
       enableDesc:
         '手机/平板浏览器连到电脑录音，语音实时落到电脑光标处（需 HTTPS，首次访问要信任证书）',
       portLabel: '监听端口',
-      defaultModeLabel: '默认录音方式',
+      defaultModeLabel: '远程录音方式',
+      modeLocked: '本轮远程录音完成后才能修改录音方式。',
+      modeSaveFailed: '录音方式未能保存，请重试。',
       modeToggle: '点击切换',
       modeHold: '按住说话',
       urlLabel: '访问网址',

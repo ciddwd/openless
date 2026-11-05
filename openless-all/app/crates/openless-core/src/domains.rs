@@ -1266,6 +1266,19 @@ pub trait RemoteInputApi: Send + Sync {
     fn bind_event_publisher(&self, _publisher: crate::events::BackendEventPublisher) {}
     #[doc(hidden)]
     fn bind_task_spawner(&self, _spawner: std::sync::Arc<dyn crate::config::TaskSpawner>) {}
+    /// Keep audio admission blocked until the shared recording mode has been saved.
+    fn try_lock_recording_mode_change(
+        &self,
+        connection_id: Option<SessionId>,
+    ) -> Result<Option<tokio::sync::OwnedMutexGuard<()>>, BackendError> {
+        if connection_id.is_some() {
+            return Err(BackendError::new(
+                BackendErrorCode::PermissionDenied,
+                "remote input connection is no longer active",
+            ));
+        }
+        Ok(None)
+    }
     /// Return the current in-process state without scheduling I/O. Hosts use
     /// this snapshot from synchronous render/menu code; transport operations
     /// remain asynchronous below.

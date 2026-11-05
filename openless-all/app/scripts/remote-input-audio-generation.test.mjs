@@ -10,7 +10,6 @@ const names = [
   'withTimeout',
   'startRecording',
   'stopRecording',
-  'cancelRecording',
   'ensureAudio',
   'buildCaptureGraph',
   'clearPendingPcm',
@@ -201,19 +200,17 @@ function assertActive(h, stream, node) {
   assert.deepEqual(h.calls.sent, ['start'], 'only the current attempt may send start');
 }
 
-for (const end of ['stopRecording', 'cancelRecording']) {
-  test(`late microphone success after ${end} cannot replace a retry`, async () => {
-    const h = harness();
-    await startPending(h);
-    h.state[end]();
-    await startPending(h);
-    const current = await resolveMic(h, 1);
-    const node = h.state.sourceNode;
-    const stale = await resolveMic(h, 0);
-    assert.equal(stale.track.stopped, true, 'cancelled microphone request must release its tracks');
-    assertActive(h, current, node);
-  });
-}
+test('late microphone success after stopRecording cannot replace a retry', async () => {
+  const h = harness();
+  await startPending(h);
+  h.state.stopRecording();
+  await startPending(h);
+  const current = await resolveMic(h, 1);
+  const node = h.state.sourceNode;
+  const stale = await resolveMic(h, 0);
+  assert.equal(stale.track.stopped, true, 'cancelled microphone request must release its tracks');
+  assertActive(h, current, node);
+});
 
 test('late microphone rejection cannot stop a retry', async () => {
   const h = harness();

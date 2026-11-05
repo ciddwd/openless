@@ -3850,11 +3850,11 @@ pub const CATALOG: &[Msg] = &[
     Msg {
         key: "settings.remote_input.default_mode_label",
         text: row(
-            "默认录音方式",
-            "預設錄音方式",
-            "Default recording mode",
-            "既定の録音方式",
-            "기본 녹음 방식",
+            "远程录音方式",
+            "遠端錄音方式",
+            "Remote recording mode",
+            "リモート録音方式",
+            "원격 녹음 방식",
         ),
     },
     Msg {

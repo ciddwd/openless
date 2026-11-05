@@ -334,6 +334,7 @@ pub use providers::{
 pub use qa_service::QaService;
 pub use remote_input_service::{
     authenticate_remote_input_hello, constant_time_eq, finish_remote_input_connection,
+    remote_input_recording_mode_reply,
     validate_pairing_pin, RemoteFrameCodec,
     RemoteInputService, RemoteStreamSequence, REMOTE_INPUT_MAX_PCM_FRAME_BYTES,
     REMOTE_INPUT_PAIRING_PIN_LEN,

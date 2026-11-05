@@ -62,6 +62,8 @@ function phone({ storageAvailable = true } = {}) {
     },
     showScreen() {},
     showPinError() {},
+    receiveMode() {},
+    showModeNotice() {},
     resetConnectBtn() {},
     armConnectTimeout() {},
     clearConnectTimeout() {},

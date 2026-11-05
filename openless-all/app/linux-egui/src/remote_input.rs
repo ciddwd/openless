@@ -385,13 +385,7 @@ async fn index(State(state): State<Arc<WebState>>) -> Html<String> {
         .status()
         .map(|status| status.locale)
         .unwrap_or_else(|_| "zh-CN".to_string());
-    // Read the current PC default on each page load. The page retains an explicit
-    // phone choice; only fixed literals may enter its inline script, never raw prefs.
-    let default_mode = if state.backend.get_preferences().remote_input_default_mode == "hold" {
-        "hold"
-    } else {
-        "toggle"
-    };
+    let default_mode = state.backend.remote_input_recording_mode();
     Html(
         assets::INDEX_HTML
             .replace("%%OL_LANG%%", &locale)
@@ -492,8 +486,13 @@ async fn websocket_session(mut socket: WebSocket, state: Arc<WebState>, peer: Ip
         }
         _ => return,
     };
-    let Ok(reply) = auth else { return };
+    let Ok(mut reply) = auth else { return };
+    let mut events = state.backend.subscribe();
+    let mut recording_mode = state.backend.remote_input_recording_mode();
     let accepted = reply["ok"] == true;
+    if accepted {
+        reply["recordingMode"] = serde_json::json!(recording_mode);
+    }
     if socket.send(json_message(reply)).await.is_err() {
         let _ = state
             .backend
@@ -507,7 +506,6 @@ async fn websocket_session(mut socket: WebSocket, state: Arc<WebState>, peer: Ip
         return;
     }
 
-    let mut events = state.backend.subscribe();
     let mut remote_session = None;
     // Poll finalization beside socket input. Awaiting it in the receive arm
     // would prevent the phone from cancelling a slow provider request.
@@ -539,7 +537,7 @@ async fn websocket_session(mut socket: WebSocket, state: Arc<WebState>, peer: Ip
                         let previous_session = remote_session;
                         if let Some(reply) = apply_control(
                             &text,
-                            state.backend.services().remote_input.as_ref(),
+                            &state.backend,
                             connection_id,
                             &mut remote_session,
                             &mut pending_stop,
@@ -557,6 +555,17 @@ async fn websocket_session(mut socket: WebSocket, state: Arc<WebState>, peer: Ip
                 }
             }
             event = events.recv() => {
+                if matches!(&event, Ok(event) if matches!(&event.kind, openless_core::BackendEventKind::PreferencesChanged(_)))
+                    || matches!(&event, Err(openless_core::EventRecvError::Lagged(_)))
+                {
+                    let mode = state.backend.remote_input_recording_mode();
+                    if mode != recording_mode {
+                        recording_mode = mode;
+                        if socket.send(json_message(serde_json::json!({
+                            "type": "recording-mode", "mode": mode
+                        }))).await.is_err() { break 'connection; }
+                    }
+                }
                 let Ok(event) = event else { continue };
                 if remote_session.is_none() || event.session_id != remote_session { continue; }
                 let terminal = matches!(&event.kind,
@@ -639,13 +648,22 @@ fn json_message(value: serde_json::Value) -> Message {
 #[cfg(target_os = "linux")]
 async fn apply_control(
     text: &str,
-    remote: &dyn openless_core::RemoteInputApi,
+    backend: &openless_core::OpenLessBackend,
     connection_id: SessionId,
     remote_session: &mut Option<SessionId>,
     pending_stop: &mut Option<(SessionId, BoxFuture<'static, Result<(), BackendError>>)>,
 ) -> Option<serde_json::Value> {
     let value = serde_json::from_str::<serde_json::Value>(text).ok()?;
+    let remote = backend.services().remote_input.as_ref();
     match value.get("type").and_then(serde_json::Value::as_str)? {
+        "set_recording_mode" => Some(openless_core::remote_input_recording_mode_reply(
+            backend,
+            connection_id,
+            value
+                .get("mode")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default(),
+        )),
         "start" if pending_stop.is_some() => {
             Some(serde_json::json!({"type":"busy", "reason":"previous stream is still finishing"}))
         }
@@ -833,7 +851,7 @@ mod tests {
         let mut pending_stop = None;
         apply_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -843,7 +861,7 @@ mod tests {
         let started = owner.unwrap();
         apply_control(
             r#"{"type":"stop"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -924,7 +942,7 @@ mod tests {
         let mut pending_stop = None;
         apply_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -933,7 +951,7 @@ mod tests {
         let first = owner.unwrap();
         apply_control(
             r#"{"type":"stop"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -945,7 +963,7 @@ mod tests {
         assert_eq!(remote.status().unwrap().active_session_id, Some(first));
         apply_control(
             r#"{"type":"cancel"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -954,7 +972,7 @@ mod tests {
         assert_eq!(runtime.0.audio_cancel_count(), 1);
         let response = apply_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -972,7 +990,7 @@ mod tests {
         pending_stop = Some((first, Box::pin(async { Ok(()) })));
         apply_control(
             r#"{"type":"cancel"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,

@@ -2390,7 +2390,9 @@ export const en: typeof zhCN = {
       enableDesc:
         "Record from a phone/tablet browser on your LAN; speech is typed at your computer's cursor (HTTPS required; trust the certificate on first visit)",
       portLabel: 'Port',
-      defaultModeLabel: 'Default recording mode',
+      defaultModeLabel: 'Remote recording mode',
+      modeLocked: 'Finish the remote recording before changing the mode.',
+      modeSaveFailed: 'Could not save the recording mode. Try again.',
       modeToggle: 'Tap to toggle',
       modeHold: 'Hold to talk',
       urlLabel: 'Access URL',

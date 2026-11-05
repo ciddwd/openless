@@ -199,7 +199,7 @@ assert.doesNotMatch(
 );
 assert.match(
   remoteServer,
-  /apply_remote_control\([^]*?state\.backend\.services\(\)\.remote_input\.as_ref\(\)/,
+  /async fn apply_remote_control\([^]*?backend\.services\(\)\.remote_input\.as_ref\(\)/,
   'Remote Input WebSocket control must use the Core lifecycle',
 );
 const remoteFrameParser = remoteServer.match(/fn parse_audio_frame\([^]*?\n\}/)?.[0];

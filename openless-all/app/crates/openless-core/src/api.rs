@@ -2765,6 +2765,16 @@ fn queue_pending_correction_state(
     Ok(Some(suggestion))
 }
 
+fn validate_remote_input_recording_mode(mode: &str) -> Result<(), BackendError> {
+    match mode {
+        "toggle" | "hold" => Ok(()),
+        _ => Err(BackendError::new(
+            BackendErrorCode::InvalidArgument,
+            "invalid remote recording mode",
+        )),
+    }
+}
+
 fn settings_transaction_error(
     mut primary: BackendError,
     compensation_errors: Vec<BackendError>,
@@ -6593,6 +6603,38 @@ impl OpenLessBackend {
         self.preferences.get()
     }
 
+    pub fn remote_input_recording_mode(&self) -> &'static str {
+        if self.get_preferences().remote_input_default_mode == "hold" {
+            "hold"
+        } else {
+            "toggle"
+        }
+    }
+
+    pub fn set_remote_input_recording_mode(
+        &self,
+        connection_id: SessionId,
+        mode: &str,
+    ) -> Result<(), BackendError> {
+        self.ensure_runtime_ready()?;
+        validate_remote_input_recording_mode(mode)?;
+        let _write_guard = self
+            .settings_write_gate
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _remote_guard = self
+            .services()
+            .remote_input
+            .try_lock_recording_mode_change(Some(connection_id))?;
+        let mut preferences = self.preferences.get();
+        if preferences.remote_input_default_mode != mode {
+            preferences.remote_input_default_mode = mode.to_owned();
+            self.preferences.set(preferences)?;
+            self.publish_preferences_changed();
+        }
+        Ok(())
+    }
+
     /// Consumes the "first launch of this major version" splash PV marker:
     /// returns false when the config's `splash_seen_version` matches the
     /// given current major (no replay); on mismatch it writes back the major
@@ -6774,6 +6816,15 @@ impl OpenLessBackend {
             )
         })?;
 
+        let _remote_guard =
+            if previous.remote_input_default_mode != preferences.remote_input_default_mode {
+                validate_remote_input_recording_mode(&preferences.remote_input_default_mode)?;
+                self.services()
+                    .remote_input
+                    .try_lock_recording_mode_change(None)?
+            } else {
+                None
+            };
         let effects = crate::SettingsEffectPlan::between(&previous, &preferences);
         let mut receipt = match runtime.prepare(&effects) {
             Ok(receipt) => receipt,

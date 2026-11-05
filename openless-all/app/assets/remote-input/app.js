@@ -30,6 +30,8 @@
       pinFieldLabel: '配对码（电脑上显示的 6 位数字）',
       btnConnect: '连接',
       btnConnecting: '连接中…',
+      modeLocked: '本轮远程录音完成后才能修改录音方式。',
+      modeSaveFailed: '录音方式未能保存，请重试。',
       modeToggle: '点按',
       insertLabel: '电脑落字',
       modeHold: '按住',
@@ -51,7 +53,6 @@
       statusTranscribing: '🔄 识别中',
       statusPolishing: '✨ 润色中',
       statusDone: '✅ 已输入 {n} 字',
-      cancelled: '已取消',
       connLost: '连接已断开',
       errPinFormat: '请输入 6 位数字配对码。',
       errPinWrong: '配对码错误，请重试。',
@@ -101,6 +102,8 @@
       pinFieldLabel: '配對碼（電腦上顯示的 6 位數字）',
       btnConnect: '連線',
       btnConnecting: '連線中…',
+      modeLocked: '本輪遠端錄音完成後才能修改錄音方式。',
+      modeSaveFailed: '無法儲存錄音方式，請重試。',
       modeToggle: '點按',
       insertLabel: '電腦落字',
       modeHold: '按住',
@@ -122,7 +125,6 @@
       statusTranscribing: '🔄 辨識中',
       statusPolishing: '✨ 潤飾中',
       statusDone: '✅ 已輸入 {n} 字',
-      cancelled: '已取消',
       connLost: '連線已中斷',
       errPinFormat: '請輸入 6 位數字配對碼。',
       errPinWrong: '配對碼錯誤，請重試。',
@@ -176,6 +178,8 @@
       pinFieldLabel: 'Pairing code (6 digits shown on your computer)',
       btnConnect: 'Connect',
       btnConnecting: 'Connecting…',
+      modeLocked: 'Finish the remote recording before changing the mode.',
+      modeSaveFailed: 'Could not save the recording mode. Try again.',
       modeToggle: 'Tap',
       insertLabel: 'Type on PC',
       modeHold: 'Hold',
@@ -197,7 +201,6 @@
       statusTranscribing: '🔄 Transcribing',
       statusPolishing: '✨ Polishing',
       statusDone: '✅ Inserted {n} chars',
-      cancelled: 'Cancelled',
       connLost: 'Connection lost',
       errPinFormat: 'Please enter the 6-digit pairing code.',
       errPinWrong: 'Wrong pairing code, please try again.',
@@ -239,6 +242,8 @@
       pinFieldLabel: 'Código de emparejamiento (6 dígitos mostrados en el ordenador)',
       btnConnect: 'Conectar',
       btnConnecting: 'Conectando…',
+      modeLocked: 'Termina la grabación remota antes de cambiar el modo.',
+      modeSaveFailed: 'No se pudo guardar el modo de grabación. Inténtalo de nuevo.',
       modeToggle: 'Tocar',
       insertLabel: 'Escribir en el ordenador',
       modeHold: 'Mantener',
@@ -260,7 +265,6 @@
       statusTranscribing: '🔄 Transcribiendo',
       statusPolishing: '✨ Puliendo el texto',
       statusDone: '✅ Se han insertado {n} caracteres',
-      cancelled: 'Cancelado',
       connLost: 'Conexión perdida',
       errPinFormat: 'Introduce el código de emparejamiento de 6 dígitos.',
       errPinWrong: 'El código no es correcto. Inténtalo de nuevo.',
@@ -316,6 +320,8 @@
       pinFieldLabel: 'Code de jumelage (6 chiffres affichés sur votre ordinateur)',
       btnConnect: 'Connecter',
       btnConnecting: 'Connexion…',
+      modeLocked: 'Terminez l’enregistrement à distance avant de changer de mode.',
+      modeSaveFailed: 'Impossible d’enregistrer le mode. Réessayez.',
       modeToggle: 'Toucher',
       insertLabel: 'Saisir sur le PC',
       modeHold: 'Maintenir',
@@ -339,7 +345,6 @@
       statusTranscribing: '🔄 Transcription',
       statusPolishing: '✨ Retouche du texte',
       statusDone: '✅ {n} caractères insérés',
-      cancelled: 'Annulé',
       connLost: 'Connexion perdue',
       errPinFormat: 'Saisissez le code de jumelage à 6 chiffres.',
       errPinWrong: 'Code incorrect. Réessayez.',
@@ -395,6 +400,8 @@
       pinFieldLabel: 'Kopplungscode (6 Ziffern auf dem Computer)',
       btnConnect: 'Verbinden',
       btnConnecting: 'Verbindung wird hergestellt…',
+      modeLocked: 'Beende die Fernaufnahme, bevor du den Modus änderst.',
+      modeSaveFailed: 'Der Aufnahmemodus konnte nicht gespeichert werden. Versuche es erneut.',
       modeToggle: 'Tippen',
       insertLabel: 'Am Computer einfügen',
       modeHold: 'Gedrückt halten',
@@ -418,7 +425,6 @@
       statusTranscribing: '🔄 Transkription läuft',
       statusPolishing: '✨ Text wird überarbeitet',
       statusDone: '✅ {n} Zeichen eingefügt',
-      cancelled: 'Abgebrochen',
       connLost: 'Verbindung getrennt',
       errPinFormat: 'Gib den 6-stelligen Kopplungscode ein.',
       errPinWrong: 'Der Code ist falsch. Versuche es erneut.',
@@ -487,6 +493,8 @@
       pinFieldLabel: 'ペアリングコード（パソコンに表示される6桁の数字）',
       btnConnect: '接続',
       btnConnecting: '接続中…',
+      modeLocked: 'リモート録音が終わってから録音方式を変更してください。',
+      modeSaveFailed: '録音方式を保存できませんでした。もう一度お試しください。',
       modeToggle: 'タップ',
       insertLabel: 'PCに入力',
       modeHold: '長押し',
@@ -508,7 +516,6 @@
       statusTranscribing: '🔄 認識中',
       statusPolishing: '✨ 整文中',
       statusDone: '✅ {n}文字を入力しました',
-      cancelled: 'キャンセルしました',
       connLost: '接続が切断されました',
       errPinFormat: '6桁の数字のペアリングコードを入力してください。',
       errPinWrong: 'ペアリングコードが違います。もう一度お試しください。',
@@ -563,6 +570,8 @@
       pinFieldLabel: '페어링 코드 (컴퓨터에 표시된 6자리 숫자)',
       btnConnect: '연결',
       btnConnecting: '연결 중…',
+      modeLocked: '원격 녹음이 끝난 후 녹음 방식을 변경할 수 있습니다.',
+      modeSaveFailed: '녹음 방식을 저장하지 못했습니다. 다시 시도해 주세요.',
       modeToggle: '탭',
       insertLabel: 'PC에 입력',
       modeHold: '길게 누르기',
@@ -584,7 +593,6 @@
       statusTranscribing: '🔄 인식 중',
       statusPolishing: '✨ 다듬는 중',
       statusDone: '✅ {n}자 입력함',
-      cancelled: '취소됨',
       connLost: '연결이 끊겼습니다',
       errPinFormat: '6자리 숫자 페어링 코드를 입력하세요.',
       errPinWrong: '페어링 코드가 잘못되었습니다. 다시 시도하세요.',
@@ -663,7 +671,6 @@
 
   // ---------- Constants ----------
   var TARGET_SR = 16000; // target sample rate; must match the PC side
-  var MODE_KEY = 'ol_remote_mode'; // localStorage key: recording mode
   var PIN_KEY = 'ol_remote_pin'; // legacy PIN storage, removed after pairing
   var RECONNECT_TOKEN_KEY = 'ol_remote_reconnect_token';
   var INSERT_KEY = 'ol_remote_insert'; // localStorage key: insert-on-PC toggle (default on)
@@ -696,6 +703,7 @@
   var levelBar = $('level-bar');
   var recTip = $('rec-tip');
   var modeSwitch = $('mode-switch');
+  var modeNotice = $('mode-notice');
   var insertSwitch = $('insert-switch');
   var wakeLockSwitch = $('wake-lock-switch');
   var wakeLockHint = $('wake-lock-hint');
@@ -710,7 +718,8 @@
   var recording = false; // whether a recording is active (decides whether to send audio)
   var startSent = false; // whether {type:'start'} for this recording has actually been sent (only after ensureAudio resolves)
   var busy = false; // PC is busy; disable this session
-  var mode = readMode(); // 'toggle' | 'hold'
+  var sharedMode = window.__OL_DEFAULT_MODE__ === 'hold' ? 'hold' : 'toggle';
+  var mode = sharedMode;
   var reconnectToken = readReconnectToken();
   var remoteSessionId = '';
   var remoteSequence = 0;
@@ -940,25 +949,19 @@
     });
   }
 
-  function readMode() {
-    var m = null;
-    try {
-      m = localStorage.getItem(MODE_KEY);
-    } catch (e) {}
-    // An explicitly saved phone-side mode wins; on first visit, corrupted value or disabled
-    // storage, follow the PC's current default. Never write the inherited value back, or later
-    // PC-side changes would stop taking effect.
-    if (m === 'hold' || m === 'toggle') return m;
-    return window.__OL_DEFAULT_MODE__ === 'hold' ? 'hold' : 'toggle';
-  }
-  function writeMode(m) {
-    mode = m;
-    try {
-      localStorage.setItem(MODE_KEY, m);
-    } catch (e) {}
+  function receiveMode(m) {
+    if (m !== 'hold' && m !== 'toggle') return;
+    sharedMode = m;
     syncModeUI();
   }
+  function showModeNotice(message) {
+    modeNotice.textContent = message;
+    modeNotice.hidden = !message;
+  }
   function syncModeUI() {
+    // Keep the gesture used to start this take, even if a message sent before
+    // audio admission arrives while the browser is preparing the microphone.
+    if (!recording) mode = sharedMode;
     var btns = modeSwitch.querySelectorAll('.mode-btn');
     for (var i = 0; i < btns.length; i++) {
       btns[i].classList.toggle('active', btns[i].getAttribute('data-mode') === mode);
@@ -974,15 +977,21 @@
     }
   }
 
-  // A manual switch on the phone is saved as a local preference and keeps taking precedence over the PC default.
   modeSwitch.addEventListener('click', function (e) {
     var t = e.target.closest('.mode-btn');
     if (!t) return;
     var m = t.getAttribute('data-mode');
     if (m === mode) return;
-    // When switching mode while recording, stop safely first (cancel this take to avoid inconsistent state)
-    if (recording) cancelRecording();
-    writeMode(m);
+    if (recording || startSent || awaitingResult) {
+      showModeNotice(L.modeLocked);
+      return;
+    }
+    if (!authed || !ws || ws.readyState !== 1) {
+      showModeNotice(L.connLost);
+      return;
+    }
+    showModeNotice('');
+    wsSendJSON({ type: 'set_recording_mode', mode: m });
   });
 
   // ============================================================
@@ -1218,6 +1227,8 @@
           busy = false;
           clearConnectTimeout();
           if (msg.reconnectToken) rememberReconnectToken(msg.reconnectToken);
+          receiveMode(msg.recordingMode);
+          showModeNotice('');
           pinInput.value = '';
           enterRecScreen();
           requestRecovery();
@@ -1235,6 +1246,13 @@
 
       case 'status':
         applyStatusKind(msg);
+        break;
+
+      case 'recording-mode':
+        receiveMode(msg.mode);
+        showModeNotice(
+          msg.error === 'recording' ? L.modeLocked : msg.error ? L.modeSaveFailed : '',
+        );
         break;
 
       case 'started':
@@ -1465,11 +1483,7 @@
     recordBtn.classList.toggle('recording', recording);
     recordBtn.classList.toggle('busy', (busy || awaitingResult) && !recording);
     recordBtn.disabled = (busy || awaitingResult) && !recording;
-    if (recording) {
-      recordLabel.textContent = mode === 'hold' ? L.labelHoldRec : L.labelToggleRec;
-    } else {
-      recordLabel.textContent = mode === 'hold' ? L.labelHoldIdle : L.labelToggleIdle;
-    }
+    syncModeUI();
   }
 
   // Toggle mode: click to switch
@@ -1613,35 +1627,6 @@
       setLevel(0);
       armWorkTimeout();
     }
-  }
-
-  function cancelRecording() {
-    detachHoldEnd();
-    awaitingResult = false;
-    clearRecoveryTimer();
-    saveRecoverySession('');
-    if (!recording && !startSent) {
-      teardownAudioCapture();
-      resetRemoteStreamState();
-      return;
-    }
-    clearReadyTimer();
-    clearWorkTimeout();
-    recording = false;
-    updateRecordBtnUI();
-    teardownAudioCapture();
-    if (startSent) {
-      wsSendJSON({ type: 'cancel' });
-      if (remoteSessionId) resetRemoteStreamState();
-      else {
-        finishAfterStarted = 'cancel';
-        clearPendingPcm();
-      }
-    } else {
-      resetRemoteStreamState();
-    }
-    setStatus(L.cancelled, null);
-    setLevel(0);
   }
 
   function micErrorText(err) {

@@ -2434,7 +2434,9 @@ export const es: typeof zhCN = {
       enableDesc:
         'Graba desde el navegador de un móvil o tableta en tu red local. El texto se escribirá donde esté el cursor del ordenador. Requiere HTTPS; confía en el certificado en la primera visita.',
       portLabel: 'Puerto',
-      defaultModeLabel: 'Modo de grabación predeterminado',
+      defaultModeLabel: 'Modo de grabación remota',
+      modeLocked: 'Termina la grabación remota antes de cambiar el modo.',
+      modeSaveFailed: 'No se pudo guardar el modo de grabación. Inténtalo de nuevo.',
       modeToggle: 'Pulsar para alternar',
       modeHold: 'Mantener para hablar',
       urlLabel: 'URL de acceso',

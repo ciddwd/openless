@@ -34,6 +34,23 @@ const PAIRING_PIN_TTL: std::time::Duration = std::time::Duration::from_secs(10 *
 const RECONNECT_TOKEN_TTL: std::time::Duration = std::time::Duration::from_secs(24 * 60 * 60);
 const RECONNECT_TOKEN_CAP: usize = 64;
 
+pub fn remote_input_recording_mode_reply(
+    backend: &crate::OpenLessBackend,
+    connection_id: SessionId,
+    mode: &str,
+) -> serde_json::Value {
+    let mut reply = serde_json::json!({ "type": "recording-mode" });
+    if let Err(error) = backend.set_remote_input_recording_mode(connection_id, mode) {
+        reply["error"] = serde_json::json!(if error.code == BackendErrorCode::Busy {
+            "recording"
+        } else {
+            "save-failed"
+        });
+    }
+    reply["mode"] = serde_json::json!(backend.remote_input_recording_mode());
+    reply
+}
+
 /// Shared by both native WebSocket hosts. Secrets are returned only in the direct
 /// authentication reply, never through the backend event bus.
 pub async fn authenticate_remote_input_hello(
@@ -777,6 +794,33 @@ impl RemoteInputService {
 }
 
 impl RemoteInputApi for RemoteInputService {
+    fn try_lock_recording_mode_change(
+        &self,
+        connection_id: Option<SessionId>,
+    ) -> Result<Option<tokio::sync::OwnedMutexGuard<()>>, BackendError> {
+        let busy = || BackendError::new(BackendErrorCode::Busy, "remote recording in progress");
+        let guard = Arc::clone(&self.lifecycle)
+            .try_lock_owned()
+            .map_err(|_| busy())?;
+        let state = self.state.lock().expect("remote input state lock poisoned");
+        if let Some(connection_id) = connection_id {
+            if !state.running || !state.connections.contains_key(&connection_id) {
+                return Err(BackendError::new(
+                    BackendErrorCode::PermissionDenied,
+                    "remote input connection is no longer active",
+                ));
+            }
+        }
+        if state
+            .connections
+            .values()
+            .any(|connection| connection.stream.is_some())
+        {
+            return Err(busy());
+        }
+        Ok(Some(guard))
+    }
+
     fn bind_task_spawner(&self, spawner: Arc<dyn TaskSpawner>) {
         *self
             .task_spawner

@@ -47,6 +47,8 @@ export function RemoteInputSection() {
   const [status, setStatus] = useState<RemoteInputStatus | null>(null);
   const [startError, setStartError] = useState<{ reason: string; port: number } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [pendingMode, setPendingMode] = useState<'toggle' | 'hold' | null>(null);
+  const [modeError, setModeError] = useState<'modeLocked' | 'modeSaveFailed' | null>(null);
   // Port edit draft: parsed and committed on blur/Enter only, so per-keystroke persistence does
   // not restart the backend service repeatedly on intermediate port values.
   const [portDraft, setPortDraft] = useState<string | null>(null);
@@ -174,17 +176,40 @@ export function RemoteInputSection() {
       </SettingRow>
 
       <SettingRow label={t('settings.remoteInput.defaultModeLabel')}>
-        <Segmented
-          label={t('settings.remoteInput.defaultModeLabel')}
-          value={mode}
-          onChange={(m) => updatePrefs({ ...prefs, remoteInputDefaultMode: m })}
-          options={(['toggle', 'hold'] as const).map((m) => ({
-            value: m,
-            label: t(
-              m === 'toggle' ? 'settings.remoteInput.modeToggle' : 'settings.remoteInput.modeHold',
-            ),
-          }))}
-        />
+        <div>
+          <Segmented
+            label={t('settings.remoteInput.defaultModeLabel')}
+            value={pendingMode ?? mode}
+            disabled={pendingMode !== null}
+            onChange={async (m) => {
+              setPendingMode(mode);
+              setModeError(null);
+              try {
+                await updatePrefs((current) => ({ ...current, remoteInputDefaultMode: m }));
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                setModeError(
+                  message === 'remote recording in progress' ? 'modeLocked' : 'modeSaveFailed',
+                );
+              } finally {
+                setPendingMode(null);
+              }
+            }}
+            options={(['toggle', 'hold'] as const).map((m) => ({
+              value: m,
+              label: t(
+                m === 'toggle'
+                  ? 'settings.remoteInput.modeToggle'
+                  : 'settings.remoteInput.modeHold',
+              ),
+            }))}
+          />
+          {modeError && (
+            <p role="status" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--ol-ink-3)' }}>
+              {t(`settings.remoteInput.${modeError}`)}
+            </p>
+          )}
+        </div>
       </SettingRow>
 
       {enabled && (viewState === 'running' || viewState === 'stale') && status && (

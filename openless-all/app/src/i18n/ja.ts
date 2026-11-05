@@ -2359,7 +2359,9 @@ export const ja: typeof zhCN = {
       enableDesc:
         'スマホ/タブレットのブラウザから PC に接続して録音し、音声を PC のカーソル位置にリアルタイムで入力します（HTTPS が必要。初回アクセス時は証明書を信頼してください）',
       portLabel: '待ち受けポート',
-      defaultModeLabel: '既定の録音方式',
+      defaultModeLabel: 'リモート録音方式',
+      modeLocked: 'リモート録音が終わってから録音方式を変更してください。',
+      modeSaveFailed: '録音方式を保存できませんでした。もう一度お試しください。',
       modeToggle: 'タップで切替',
       modeHold: '押し続けて話す',
       urlLabel: 'アクセス URL',

@@ -2250,7 +2250,9 @@ export const zhTW: typeof zhCN = {
       enableDesc:
         '手機/平板瀏覽器連到電腦錄音，語音即時落到電腦遊標處（需 HTTPS，首次存取要信任憑證）',
       portLabel: '監聽連線埠',
-      defaultModeLabel: '預設錄音方式',
+      defaultModeLabel: '遠端錄音方式',
+      modeLocked: '本輪遠端錄音完成後才能修改錄音方式。',
+      modeSaveFailed: '無法儲存錄音方式，請重試。',
       modeToggle: '點選切換',
       modeHold: '按住說話',
       urlLabel: '存取網址',

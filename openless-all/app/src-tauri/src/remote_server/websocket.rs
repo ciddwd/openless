@@ -146,14 +146,20 @@ async fn handle_ws(mut socket: WebSocket, state: Arc<WsState>, peer_ip: IpAddr) 
         }
         _ => return,
     };
-    let reply = match authentication {
+    let mut reply = match authentication {
         Ok(reply) => reply,
         Err(error) => {
             log::warn!("[remote-input] authentication failed: {error}");
             return;
         }
     };
+    // Subscribe before reading the setting so a concurrent edit reaches this phone.
+    let mut events = state.backend.subscribe();
+    let mut recording_mode = state.backend.remote_input_recording_mode();
     let accepted = reply["ok"] == true;
+    if accepted {
+        reply["recordingMode"] = serde_json::json!(recording_mode);
+    }
     if socket.send(send_json(&reply)).await.is_err() {
         // Admission may have succeeded before the phone disappeared.
         let _ = state
@@ -168,9 +174,6 @@ async fn handle_ws(mut socket: WebSocket, state: Arc<WsState>, peer_ip: IpAddr) 
         return;
     }
 
-    // Subscribe before the start control frame so even a fast session's initial events are
-    // forwarded once the owner is established.
-    let mut events = state.backend.subscribe();
     let mut last_event_sequence = 0;
 
     // 3) Main loop: phone upstream (control / PCM) + backend status downstream + keepalive
@@ -237,14 +240,24 @@ async fn handle_ws(mut socket: WebSocket, state: Arc<WsState>, peer_ip: IpAddr) 
                 }
             }
             received = events.recv() => {
-                let received = match received {
-                    Ok(event) => vec![event],
+                let (received, resync_mode) = match received {
+                    Ok(event) => (vec![event], false),
                     Err(openless_core::EventRecvError::Lagged(_)) => {
-                        state.backend.replay_events_after(last_event_sequence).events
+                        (state.backend.replay_events_after(last_event_sequence).events, true)
                     }
                     Err(openless_core::EventRecvError::Closed) => { preserve_audio = false; break; },
                     Err(openless_core::EventRecvError::Empty) => continue,
                 };
+                if resync_mode || received.iter().any(|event| matches!(&event.kind,
+                    openless_core::BackendEventKind::PreferencesChanged(_))) {
+                    let mode = state.backend.remote_input_recording_mode();
+                    if mode != recording_mode {
+                        recording_mode = mode;
+                        if socket.send(send_json(&serde_json::json!({
+                            "type": "recording-mode", "mode": mode
+                        }))).await.is_err() { break 'connection; }
+                    }
+                }
                 for event in received {
                     if event.sequence <= last_event_sequence {
                         continue;
@@ -342,7 +355,7 @@ async fn handle_control(
 ) -> bool {
     if let Some(reply) = apply_remote_control(
         txt,
-        state.backend.services().remote_input.as_ref(),
+        &state.backend,
         connection_id,
         remote_session_id,
         pending_stop,
@@ -358,7 +371,7 @@ async fn handle_control(
 
 async fn apply_remote_control(
     txt: &str,
-    remote_input: &dyn openless_core::RemoteInputApi,
+    backend: &openless_core::OpenLessBackend,
     connection_id: openless_core::SessionId,
     remote_session_id: &mut Option<openless_core::SessionId>,
     pending_stop: &mut Option<PendingRemoteStop>,
@@ -367,7 +380,17 @@ async fn apply_remote_control(
         Ok(v) => v,
         Err(_) => return None,
     };
+    let remote_input = backend.services().remote_input.as_ref();
     match v.get("type").and_then(|t| t.as_str()).unwrap_or("") {
+        "set_recording_mode" => {
+            return Some(openless_core::remote_input_recording_mode_reply(
+                backend,
+                connection_id,
+                v.get("mode")
+                    .and_then(|mode| mode.as_str())
+                    .unwrap_or_default(),
+            ));
+        }
         "start" => {
             log::info!("[remote-input] 收到「开始录音」");
             match remote_input.start_stream(connection_id).await {
@@ -501,7 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn websocket_rotation_keeps_two_phones_audio_and_final_results_connected() {
+    async fn websocket_mode_sync_and_pin_rotation_preserve_live_sessions() {
         use futures_util::{SinkExt, StreamExt};
         use tokio_tungstenite::tungstenite::Message as PhoneMessage;
         type Phone = tokio_tungstenite::WebSocketStream<
@@ -568,7 +591,20 @@ mod tests {
             ))
             .await
             .unwrap();
-        assert_eq!(receive(&mut first, "auth").await["ok"], true);
+        let first_auth = receive(&mut first, "auth").await;
+        assert_eq!(first_auth["ok"], true);
+        assert_eq!(first_auth["recordingMode"], "toggle");
+        let save_desktop_mode = |mode: &str| {
+            let mut preferences = backend.get_preferences();
+            preferences.remote_input_default_mode = mode.to_owned();
+            backend.update_settings(
+                preferences,
+                openless_core::SettingsUpdateOptions::STRICT,
+                &openless_core::NoopSettingsRuntime,
+            )
+        };
+        save_desktop_mode("hold").unwrap();
+        assert_eq!(receive(&mut first, "recording-mode").await["mode"], "hold");
         first
             .send(PhoneMessage::Text(r#"{"type":"start"}"#.into()))
             .await
@@ -596,7 +632,22 @@ mod tests {
             ))
             .await
             .unwrap();
-        assert_eq!(receive(&mut second, "auth").await["ok"], true);
+        let second_auth = receive(&mut second, "auth").await;
+        assert_eq!(second_auth["ok"], true);
+        assert_eq!(second_auth["recordingMode"], "hold");
+        assert_eq!(
+            save_desktop_mode("toggle").unwrap_err().code,
+            BackendErrorCode::Busy
+        );
+        let switch_to_toggle = r#"{"type":"set_recording_mode","mode":"toggle"}"#;
+        second
+            .send(PhoneMessage::Text(switch_to_toggle.into()))
+            .await
+            .unwrap();
+        let rejected = receive(&mut second, "recording-mode").await;
+        assert_eq!(rejected["error"], "recording");
+        assert_eq!(rejected["mode"], "hold");
+        assert_eq!(backend.remote_input_recording_mode(), "hold");
         remote.rotate_pairing_pin().await.unwrap();
         first
             .send(PhoneMessage::Binary(
@@ -642,6 +693,21 @@ mod tests {
         assert_eq!(
             receive(&mut first, "result").await["text"],
             "result after rotation"
+        );
+        second
+            .send(PhoneMessage::Text(switch_to_toggle.into()))
+            .await
+            .unwrap();
+        let saved = receive(&mut second, "recording-mode").await;
+        assert_eq!(saved["mode"], "toggle");
+        assert!(saved.get("error").is_none());
+        assert_eq!(
+            receive(&mut first, "recording-mode").await["mode"],
+            "toggle"
+        );
+        assert_eq!(
+            backend.get_preferences().remote_input_default_mode,
+            "toggle"
         );
         for phone in [&mut first, &mut second] {
             phone
@@ -689,7 +755,7 @@ mod tests {
 
         let started = apply_remote_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection_id,
             &mut session_id,
             &mut pending_stop,
@@ -700,7 +766,7 @@ mod tests {
         let first_session = session_id.expect("start must establish a session lease");
         let duplicate = apply_remote_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection_id,
             &mut session_id,
             &mut pending_stop,
@@ -713,7 +779,7 @@ mod tests {
 
         assert!(apply_remote_control(
             r#"{"type":"stop"}"#,
-            remote.as_ref(),
+            &backend,
             connection_id,
             &mut session_id,
             &mut pending_stop,
@@ -730,7 +796,7 @@ mod tests {
 
         apply_remote_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection_id,
             &mut session_id,
             &mut pending_stop,
@@ -745,7 +811,7 @@ mod tests {
             .unwrap();
         let stale = apply_remote_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection_id,
             &mut session_id,
             &mut pending_stop,
@@ -786,7 +852,7 @@ mod tests {
         let mut pending_stop = None;
         apply_remote_control(
             r#"{"type":"start"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -795,7 +861,7 @@ mod tests {
         let session = owner.unwrap();
         apply_remote_control(
             r#"{"type":"stop"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -805,7 +871,7 @@ mod tests {
         assert!(pending_stop.is_some(), "ASR stop 交由 socket select 轮询");
         apply_remote_control(
             r#"{"type":"cancel"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,
@@ -821,7 +887,7 @@ mod tests {
         pending_stop = Some(Box::pin(async { Ok(()) }));
         apply_remote_control(
             r#"{"type":"cancel"}"#,
-            remote.as_ref(),
+            &backend,
             connection,
             &mut owner,
             &mut pending_stop,

@@ -2465,7 +2465,9 @@ export const fr: typeof zhCN = {
       enableDesc:
         'Enregistrez depuis le navigateur d’un téléphone ou d’une tablette sur votre réseau local. Le texte est inséré au curseur de l’ordinateur. HTTPS est requis ; approuvez le certificat à la première visite.',
       portLabel: 'Port',
-      defaultModeLabel: 'Mode d’enregistrement par défaut',
+      defaultModeLabel: 'Mode d’enregistrement à distance',
+      modeLocked: 'Terminez l’enregistrement à distance avant de changer de mode.',
+      modeSaveFailed: 'Impossible d’enregistrer le mode. Réessayez.',
       modeToggle: 'Appuyer pour basculer',
       modeHold: 'Maintenir pour parler',
       urlLabel: 'URL d’accès',

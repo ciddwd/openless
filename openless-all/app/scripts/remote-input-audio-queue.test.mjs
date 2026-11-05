@@ -34,6 +34,7 @@ function fakeElement() {
 const fixtureRecoveryKey = '40112233-4455-4677-8899-aabbccddeeff';
 async function openRemotePage({
   defaultMode,
+  recordingMode,
   savedMode,
   savedWakeLock,
   savedRecovery,
@@ -220,7 +221,7 @@ async function openRemotePage({
   runInNewContext(source, context, { filename: 'remote-server/assets/app.js' });
 
   socket.onopen();
-  socket.onmessage({ data: JSON.stringify({ type: 'auth', ok: true }) });
+  socket.onmessage({ data: JSON.stringify({ type: 'auth', ok: true, recordingMode }) });
 
   return {
     document,
@@ -264,27 +265,22 @@ async function openRemotePage({
   };
 }
 
-// Exercise the displayed page, not a copied mode resolver: a new phone follows
-// the PC setting, while a mode explicitly saved on that phone takes priority.
-for (const [defaultMode, savedMode, expected] of [
-  ['hold', undefined, 'hold'],
-  ['toggle', undefined, 'toggle'],
-  ['hold', 'toggle', 'toggle'],
-  ['toggle', 'hold', 'hold'],
-  ['hold', 'invalid', 'hold'],
-  ['invalid', undefined, 'toggle'],
-  [undefined, undefined, 'toggle'],
+// The browser follows the current PC setting, including for users who selected
+// a local mode in an older version. The handshake wins if settings changed
+// after the HTML was loaded.
+for (const [defaultMode, savedMode, recordingMode, expected] of [
+  ['hold', undefined, undefined, 'hold'],
+  ['toggle', undefined, undefined, 'toggle'],
+  ['hold', 'toggle', undefined, 'hold'],
+  ['toggle', 'hold', undefined, 'toggle'],
+  ['hold', 'invalid', 'toggle', 'toggle'],
+  ['toggle', undefined, 'hold', 'hold'],
+  ['invalid', undefined, undefined, 'toggle'],
 ]) {
-  const page = await openRemotePage({ defaultMode, savedMode });
+  const page = await openRemotePage({ defaultMode, savedMode, recordingMode });
   assert.equal(
     page.element('btn-record').style.touchAction,
     expected === 'hold' ? 'none' : 'manipulation',
-    `PC default ${defaultMode}, phone choice ${savedMode} must use ${expected}`,
-  );
-  assert.equal(
-    page.storage.getItem('ol_remote_mode'),
-    savedMode ?? null,
-    'inheriting a PC default must not create a phone override',
   );
 }
 
@@ -293,8 +289,16 @@ for (const [defaultMode, savedMode, expected] of [
   page.element('mode-switch').listeners.click({
     target: { closest: () => ({ getAttribute: () => 'toggle' }) },
   });
-  assert.equal(page.storage.getItem('ol_remote_mode'), 'toggle');
+  assert.equal(JSON.parse(page.sent.at(-1)).type, 'set_recording_mode');
+  assert.equal(JSON.parse(page.sent.at(-1)).mode, 'toggle');
+  assert.equal(page.element('btn-record').style.touchAction, 'none');
+  page.socket.onmessage({ data: JSON.stringify({ type: 'recording-mode', mode: 'toggle' }) });
+  assert.equal(page.storage.getItem('ol_remote_mode'), null);
   assert.equal(page.element('btn-record').style.touchAction, 'manipulation');
+  page.socket.onmessage({
+    data: JSON.stringify({ type: 'recording-mode', mode: 'toggle', error: 'recording' }),
+  });
+  assert.match(page.element('mode-notice').textContent, /录音完成后/);
 }
 
 const binaryFrames = (sent) => sent.filter((value) => value instanceof ArrayBuffer);
@@ -347,15 +351,34 @@ const sequence = (frame) => {
   page.socket.onmessage({ data: JSON.stringify({ type: 'status', kind: 'error' }) });
 }
 
-for (const terminal of ['cancel', 'busy', 'disconnect']) {
+{
   const page = await openRemotePage();
   await page.start();
   page.pcm([6, 0]);
-  if (terminal === 'cancel') {
-    page.element('mode-switch').listeners.click({
-      target: { closest: () => ({ getAttribute: () => 'hold' }) },
-    });
-  } else if (terminal === 'busy') {
+  const sentBeforeClick = page.sent.length;
+  page.element('mode-switch').listeners.click({
+    target: { closest: () => ({ getAttribute: () => 'hold' }) },
+  });
+  assert.equal(page.sent.length, sentBeforeClick, 'mode edits must not send a cancel or change');
+  assert.match(page.element('mode-notice').textContent, /录音完成后/);
+  // A change committed before the desktop admits this recording can reach the
+  // phone late. The current take must retain its original stop gesture.
+  page.socket.onmessage({ data: JSON.stringify({ type: 'recording-mode', mode: 'hold' }) });
+  assert.equal(page.element('btn-record').style.touchAction, 'manipulation');
+  page.socket.onmessage({
+    data: JSON.stringify({ type: 'started', sessionId: '20112233-4455-6677-8899-aabbccddeeff' }),
+  });
+  assert.deepEqual(binaryFrames(page.sent).map(payload), [[6, 0]]);
+  page.element('btn-record').listeners.click();
+  assert.equal(JSON.parse(page.sent.at(-1)).type, 'stop');
+  assert.equal(page.element('btn-record').style.touchAction, 'none');
+}
+
+for (const terminal of ['busy', 'disconnect']) {
+  const page = await openRemotePage();
+  await page.start();
+  page.pcm([6, 0]);
+  if (terminal === 'busy') {
     page.socket.onmessage({ data: JSON.stringify({ type: 'busy', reason: 'test' }) });
   } else {
     page.socket.onclose();

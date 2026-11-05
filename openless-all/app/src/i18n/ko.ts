@@ -2341,7 +2341,9 @@ export const ko: typeof zhCN = {
       enableDesc:
         '휴대폰/태블릿 브라우저를 PC에 연결해 녹음하고, 음성을 PC 커서 위치에 실시간으로 입력합니다(HTTPS 필요, 첫 접속 시 인증서를 신뢰해야 함)',
       portLabel: '수신 포트',
-      defaultModeLabel: '기본 녹음 방식',
+      defaultModeLabel: '원격 녹음 방식',
+      modeLocked: '원격 녹음이 끝난 후 녹음 방식을 변경할 수 있습니다.',
+      modeSaveFailed: '녹음 방식을 저장하지 못했습니다. 다시 시도해 주세요.',
       modeToggle: '탭하여 전환',
       modeHold: '눌러서 말하기',
       urlLabel: '접속 URL',

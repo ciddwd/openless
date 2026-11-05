@@ -257,13 +257,7 @@ async fn index_handler(State(state): State<Arc<WsState>>) -> impl IntoResponse {
         .status()
         .map(|status| status.locale)
         .unwrap_or_else(|_| "zh-CN".to_string());
-    // Preferences come from persisted data; never concatenate arbitrary strings into inline
-    // script — only fixed literals are injected.
-    let default_mode = if state.backend.get_preferences().remote_input_default_mode == "hold" {
-        "hold"
-    } else {
-        "toggle"
-    };
+    let default_mode = state.backend.remote_input_recording_mode();
     Html(
         assets::INDEX_HTML
             .replace("%%OL_LANG%%", &lang)
