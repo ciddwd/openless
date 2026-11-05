@@ -57,7 +57,7 @@ const [
   read('src/lib/ipc/less-computer.ts'),
   read('src/pages/LessComputerPanel.tsx'),
   read('src-tauri/src/commands/qa.rs'),
-  read('src-tauri/src/remote_server/mod.rs'),
+  read('src-tauri/src/remote_server/websocket.rs'),
   read('crates/openless-core/src/remote_input_service.rs'),
   read('src-tauri/src/coordinator.rs'),
   read('src-tauri/src/coordinator/dictation_core.rs'),
@@ -184,12 +184,12 @@ assert.match(
 
 assert.match(
   remoteServer,
-  /\.authenticate\(connection_id[^]*?match authed \{[^]*?RemoteAuthResult::BadPin[^]*?return;[^]*?RemoteAuthResult::Locked[^]*?return;/,
+  /authenticate_remote_input_hello\([^]*?let accepted = reply\["ok"\] == true;[^]*?if !accepted \{[^]*?return;/,
   'Remote Input must delegate authentication to Core and reject invalid results before handling controls',
 );
 assert.match(
   remoteInputCore,
-  /authenticate_inner[^]*?constant_time_eq\([^]*?candidate\.expose_secret\(\)[^]*?expected\.expose_secret\(\)/,
+  /authenticate_inner[^]*?constant_time_eq\([^]*?candidate\.expose_secret\(\)[^]*?\.pairing_pin[^]*?\.expose_secret\(\)/,
   'Remote Input PIN verification must remain constant-time inside Core',
 );
 assert.doesNotMatch(
