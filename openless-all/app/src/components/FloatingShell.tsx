@@ -21,6 +21,7 @@ import type { ServiceViewId } from '../pages/settings/navigation';
 import { CloudSyncSetupPrompt } from './CloudSyncSetupPrompt';
 import { Overview } from '../pages/Overview';
 const History = lazy(() => import('../pages/History').then((m) => ({ default: m.History })));
+const Usage = lazy(() => import('../pages/Usage').then((m) => ({ default: m.Usage })));
 const Vocab = lazy(() => import('../pages/Vocab').then((m) => ({ default: m.Vocab })));
 const Style = lazy(() => import('../pages/Style').then((m) => ({ default: m.Style })));
 const Marketplace = lazy(() =>
@@ -70,6 +71,7 @@ const SIDEBAR_WIDTH = 226;
 const PAGE_CMP: Record<Exclude<AppTab, 'localAsr'>, ComponentType> = {
   overview: Overview,
   history: History,
+  usage: Usage,
   vocab: Vocab,
   style: Style,
   marketplace: Marketplace,
@@ -479,14 +481,17 @@ function FloatingShellBody({
 
             <div style={{ flex: 1 }} />
 
-            {/* Footer holds only the settings button. */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 10 }}>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, paddingTop: 10 }}
+            >
               <Tooltip content={t('shell.navHint.settings')} placement="right">
                 <button
                   onClick={() => openSettings()}
                   className={settingsOpen ? 'ol-nav-btn ol-nav-btn-active' : 'ol-nav-btn'}
                   style={{
                     display: 'flex',
+                    flex: 1,
+                    width: '100%',
                     alignItems: 'center',
                     gap: 10,
                     padding: '8px 10px',
@@ -501,6 +506,25 @@ function FloatingShellBody({
                   <span style={{ flex: 1 }}>{t('shell.footer.settings')}</span>
                 </button>
               </Tooltip>
+              <button
+                type="button"
+                className={currentTab === 'usage' ? 'ol-nav-btn ol-nav-btn-active' : 'ol-nav-btn'}
+                onClick={() => setCurrentTab('usage')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: 10,
+                  padding: '8px 10px',
+                  border: 0,
+                  borderRadius: 8,
+                  fontFamily: 'inherit',
+                  fontSize: 15,
+                }}
+              >
+                <Icon name="overview" size={16} />
+                <span>{t('shell.footer.usage', { defaultValue: 'Usage' })}</span>
+              </button>
             </div>
           </aside>
         )}
@@ -534,26 +558,32 @@ function FloatingShellBody({
               scrollRef={pageRef}
               contentKey={displayTab}
               page={displayTab}
-              // issue #243: all tabs allow overflow:auto so bottom content stays
-              //   reachable when the window shrinks or copy grows (Codex P1: overview
-              //   used hidden, leaving the Recent card fully invisible after shrinking).
-              //   - Overview uses its internal flex to grow the bottom row to fill;
-              //     at normal size the content fits exactly → no scrollbar; a thin
-              //     scrollbar appears only when it truly overflows.
-              //   - Other tabs use the thin scrollbar too.
-              className="ol-thinscroll ol-scroll-fade"
-              // Overview is a fixed single-screen dashboard. Its cards own any internal
-              // scrolling; the page surface itself never becomes a scroll container.
+              // Other tabs scroll the page. Desktop overview is one dashboard: the
+              // page surface does not scroll, and only the recent-recognition list does.
+              // Mobile overview stays a growing column because the same blocks stack.
+              className={
+                displayTab === 'overview' && !mobile
+                  ? 'ol-thinscroll ol-page-fixed'
+                  : displayTab === 'overview'
+                    ? 'ol-thinscroll'
+                    : 'ol-thinscroll ol-scroll-fade'
+              }
               style={{
                 flex: 1,
                 minHeight: 0,
-                overflow: displayTab === 'overview' ? 'hidden' : 'auto',
+                overflow: displayTab === 'overview' && !mobile ? 'hidden' : 'auto',
                 boxSizing: 'border-box',
+                // macOS: 26px title vs 15px wordmark, so the title starts 6px above the
+                // traffic-light clearance and lines up with "OpenLess". Other desktops
+                // keep a positive inset and never subtract the native caption height,
+                // so a Windows overlay title bar cannot cover the title.
                 padding: mobile
                   ? '16px 16px calc(16px + env(safe-area-inset-bottom, 0px) + 56px)'
-                  : displayTab === 'overview'
-                    ? `${os === 'mac' ? 80 : 56}px 28px 24px`
-                    : `${os === 'mac' ? 80 : 56}px 28px 32px`,
+                  : `${
+                      os === 'mac'
+                        ? `${MAC_TRAFFIC_LIGHT_CLEARANCE - 6}px`
+                        : 'max(8px, calc(var(--ol-window-titlebar-height, 0px) / var(--ol-interface-scale, 1)))'
+                    } 18px ${displayTab === 'overview' ? 12 : 32}px`,
                 // position:relative lets the page's "saved" toast anchor at absolute
                 // top:16 right:16 to this console card's corner instead of stretching
                 // across the page header as a full-width banner.
